@@ -45,6 +45,9 @@ class Favorites(models.Model):
     class Meta:
         unique_together = ['anime', 'user']
 
+    def __str__(self):
+        return self.anime.name
+
 
 class Likes(models.Model):
     video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name='liked')
@@ -69,3 +72,5 @@ class Rating(models.Model):
 
     def __str__(self):
         return f'{self.rating}'
+
+

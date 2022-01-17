@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import SimpleRouter
 
-from video.views import GenreListView, AnimeListView, VideoListView, CommentListView, RatingListView
+from video.views import GenreListView, AnimeListView, VideoListView, CommentListView, RatingListView, FavListView
 
 router = SimpleRouter()
 router.register('genre', GenreListView)
@@ -12,5 +12,6 @@ router.register('rating', RatingListView)
 
 
 urlpatterns = [
-    path('', include(router.urls))
+    path('', include(router.urls)),
+    path('fav/', FavListView.as_view()),
 ]

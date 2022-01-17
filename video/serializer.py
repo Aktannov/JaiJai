@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from video.models import Genre, Video, Anime, Comment, Favorites, Rating
+from video.tasks import send_new_series
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -37,7 +38,7 @@ class AnimeSerializer(serializers.ModelSerializer):
         for ord_dict in representation['rating_avg']:
             a += ord_dict.get('rating')
             print(a)
-            representation['rating_avg'] = a/len(RatingSerializer(instance.rating.all(), many=True).data)
+            representation['rating_avg'] = round(a/len(RatingSerializer(instance.rating.all(), many=True).data), 1)
         return representation
 
 
@@ -62,6 +63,11 @@ class VideoSerializer(serializers.ModelSerializer):
         representation['likes_count'] = instance.liked.count()
         return representation
 
+    def create(self, validated_data):
+        send_new_series.delay()
+        return super().create(validated_data)
+
+
 
 class CommentSerializer(serializers.ModelSerializer):
 
@@ -79,7 +85,7 @@ class RatingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Rating
-        exclude = ['user']
+        fields = ['anime', 'rating', 'id']
 
     def validate_rating(self, rating):
         if rating not in range(1, 6):
@@ -90,8 +96,7 @@ class RatingSerializer(serializers.ModelSerializer):
         user = self.context.get('request').user
         order = Rating.objects.filter(user=user)
         if order:
-            raise serializers.ValidationError('Пощел нахер')
-        # if user in order
+            raise serializers.ValidationError('Вы уже поставили рейтинг')
         print(len(order))
         return attrs
 
@@ -100,3 +105,25 @@ class RatingSerializer(serializers.ModelSerializer):
         user = self.context.get('request').user
         validated_data['user'] = user
         return super().create(validated_data)
+
+
+class FavoriteSerializer(serializers.Serializer):
+    user = serializers.EmailField(required=True)
+
+    def validate(self, attrs):
+        user = attrs.get('user')
+        fav = Favorites.objects.filter(user=user)
+        fav = [str(fav[i]) for i in range(len(fav))]
+        print(fav)
+        print('____________________________')
+        attrs['user'] = fav
+        print(attrs)
+        return attrs
+
+
+class SendSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ['email', 'video']
+
+
+

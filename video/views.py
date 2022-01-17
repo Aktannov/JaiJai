@@ -2,16 +2,18 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework.mixins import CreateModelMixin, DestroyModelMixin
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from video.filters import AnimeFilter
 from rest_framework.generics import ListAPIView
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import ModelViewSet, GenericViewSet
 
 from video.models import Genre, Video, Anime, Comment, Favorites, Likes, Rating
 from video.permissions import IsAdmin, IsAuthor
-from video.serializer import GenreSerializer, VideoSerializer, AnimeSerializer, CommentSerializer, RatingSerializer
+from video.serializer import GenreSerializer, VideoSerializer, AnimeSerializer, CommentSerializer, RatingSerializer, \
+    FavoriteSerializer
 
 
 class GenreListView(ModelViewSet):
@@ -60,6 +62,7 @@ class AnimeListView(ModelViewSet):
 
 
 
+
 class VideoListView(ModelViewSet):
     queryset = Video.objects.all()
     serializer_class = VideoSerializer
@@ -73,7 +76,7 @@ class VideoListView(ModelViewSet):
     @action(['POST'], detail=True)
     def add_to_liked(self, request, pk):
         video = self.get_object()
-        if not request.user.liked.filter(video=video).exists():
+        if request.user.liked.filter(video=video).exists():
             return Response('Вы уже лайкнули')
         Likes.objects.create(video=video, user=request.user)
         return Response('Вы лайкнули')
@@ -100,7 +103,7 @@ class CommentListView(ModelViewSet):
         return [AllowAny()]
 
 
-class RatingListView(ModelViewSet):
+class RatingListView(CreateModelMixin, DestroyModelMixin, GenericViewSet):
     queryset = Rating.objects.all()
     serializer_class = RatingSerializer
     def get_permissions(self):
@@ -109,3 +112,16 @@ class RatingListView(ModelViewSet):
         if self.action in ['update', 'partial_update', 'destroy']:
             return [IsAuthor()]
         return [AllowAny()]
+
+
+class FavListView(ListAPIView):
+    queryset = Favorites.objects.all()
+    serializer_class = FavoriteSerializer
+
+    def get(self, request):
+        data = request.data
+        serializer = FavoriteSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.data)
+
+
