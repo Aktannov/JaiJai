@@ -107,23 +107,28 @@ class RatingSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
-class FavoriteSerializer(serializers.Serializer):
+class FavoriteListSerializer(serializers.Serializer):
     user = serializers.EmailField(required=True)
 
     def validate(self, attrs):
         user = attrs.get('user')
         fav = Favorites.objects.filter(user=user)
+        print(fav)
         fav = [str(fav[i]) for i in range(len(fav))]
         print(fav)
         print('____________________________')
         attrs['user'] = fav
-        print(attrs)
         return attrs
 
 
 class SendSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ['email', 'video']
+
+
+# class TopSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         fields = ['text']
 
 
 

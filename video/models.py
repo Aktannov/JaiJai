@@ -39,8 +39,9 @@ class Comment(models.Model):
 
 
 class Favorites(models.Model):
-    anime = models.ForeignKey(Anime, on_delete=models.CASCADE, related_name='favorites')
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='favorites', blank=True, null=True)
+    anime = models.ForeignKey(Anime, on_delete=models.CASCADE, related_name='favorites')
+
 
     class Meta:
         unique_together = ['anime', 'user']
@@ -74,3 +75,5 @@ class Rating(models.Model):
         return f'{self.rating}'
 
 
+# class Topp(models.Model):
+#     text = models.TextField()

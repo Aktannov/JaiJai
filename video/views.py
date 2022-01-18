@@ -6,6 +6,8 @@ from rest_framework.mixins import CreateModelMixin, DestroyModelMixin
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
+from porsing import parsar
+from porsing.parsar import main
 from video.filters import AnimeFilter
 from rest_framework.generics import ListAPIView
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
@@ -13,7 +15,7 @@ from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from video.models import Genre, Video, Anime, Comment, Favorites, Likes, Rating
 from video.permissions import IsAdmin, IsAuthor
 from video.serializer import GenreSerializer, VideoSerializer, AnimeSerializer, CommentSerializer, RatingSerializer, \
-    FavoriteSerializer
+    FavoriteListSerializer
 
 
 class GenreListView(ModelViewSet):
@@ -116,12 +118,15 @@ class RatingListView(CreateModelMixin, DestroyModelMixin, GenericViewSet):
 
 class FavListView(ListAPIView):
     queryset = Favorites.objects.all()
-    serializer_class = FavoriteSerializer
+    serializer_class = FavoriteListSerializer
 
     def get(self, request):
         data = request.data
-        serializer = FavoriteSerializer(data=data)
+        serializer = FavoriteListSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         return Response(serializer.data)
 
+class TopListView(ListAPIView):
+    def get(self, request):
+        return Response(parsar.main())
 
